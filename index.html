@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Graphic Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        #calculator {
+            margin: 20px;
+        }
+        #equation {
+            width: 300px;
+            padding: 10px;
+            font-size: 16px;
+        }
+        #graphCanvas {
+            border: 1px solid #ccc;
+            cursor: grab;
+        }
+        #graphCanvas:active {
+            cursor: grabbing;
+        }
+    </style>
+    <!-- Include Math.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.min.js"></script>
+</head>
+<body>
+
+    <h1>Graphic Calculator</h1>
+
+    <div id="calculator">
+        <input type="text" id="equation" placeholder="Enter equation in terms of x">
+        <button onclick="drawGraph()">Plot Graph</button>
+    </div>
+
+    <canvas id="graphCanvas" width="800" height="600"></canvas>
+
+    <!-- Include the JavaScript code -->
+    <script src="script.js"></script>
+
+</body>
+</html>

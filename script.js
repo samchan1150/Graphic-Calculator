@@ -10,12 +10,14 @@ let startPan = { x: 0, y: 0 };
 // Reference to the canvas element
 const canvas = document.getElementById('graphCanvas');
 
+let equation;
+
 function drawGraph() {
     // Get the user-entered equation
     const equationInput = document.getElementById('equation').value;
 
     // Compile the equation
-    let equation;
+
     try {
         equation = math.compile(equationInput);
     } catch (error) {
@@ -164,6 +166,86 @@ function calculateGridSpacing(min, max) {
     return niceFraction * Math.pow(10, exponent);
 }
 
+
+function showCoordinates(event) {
+    // Get mouse position relative to the canvas
+    const rect = canvas.getBoundingClientRect();
+    const pixelX = event.clientX - rect.left;
+    const pixelY = event.clientY - rect.top;
+
+    // Convert pixel coordinates to mathematical coordinates
+    const xMouse = xMin + (pixelX / canvas.width) * (xMax - xMin);
+    const yMouse = yMax - (pixelY / canvas.height) * (yMax - yMin);
+
+    // Define a range around the mouse position to search for the closest point on the graph
+    const xRange = (xMax - xMin) * 0.01; // Adjust the multiplier for a wider or narrower search range
+    const numSamples = 50; // Number of points to sample within the range
+
+    let closestDistance = Infinity;
+    let closestPoint = null;
+
+    // Sample points around the mouse position
+    for (let i = 0; i <= numSamples; i++) {
+        // Calculate the x-value for this sample
+        const x = xMouse - xRange / 2 + (i / numSamples) * xRange;
+
+        // Evaluate the equation at x to get y
+        let yOnGraph;
+        try {
+            yOnGraph = equation.evaluate({ x: x });
+        } catch (error) {
+            continue; // Skip if the equation cannot be evaluated at this x
+        }
+
+        // Convert the point to pixel coordinates
+        const pixelXGraph = ((x - xMin) / (xMax - xMin)) * canvas.width;
+        const pixelYGraph = canvas.height - ((yOnGraph - yMin) / (yMax - yMin)) * canvas.height;
+
+        // Calculate the distance between the mouse position and this point on the graph
+        const dx = pixelX - pixelXGraph;
+        const dy = pixelY - pixelYGraph;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        // Update the closest point if this one is closer
+        if (distance < closestDistance) {
+            closestDistance = distance;
+            closestPoint = {
+                x: x,
+                y: yOnGraph,
+                pixelX: pixelXGraph,
+                pixelY: pixelYGraph
+            };
+        }
+    }
+
+    // Define a threshold in pixels for how close the mouse must be to the graph to display the coordinates
+    const threshold = 10; // You can adjust this value
+
+    if (closestDistance < threshold) {
+        // Clear and redraw the graph
+        drawGraph();
+
+        const ctx = canvas.getContext('2d');
+
+        // Draw a small circle at the closest point on the graph
+        ctx.beginPath();
+        ctx.arc(closestPoint.pixelX, closestPoint.pixelY, 5, 0, 2 * Math.PI);
+        ctx.fillStyle = 'red';
+        ctx.fill();
+
+        // Display the coordinates near the point
+        ctx.fillStyle = 'black';
+        ctx.font = '12px Arial';
+        const coordText = `(${closestPoint.x.toFixed(2)}, ${closestPoint.y.toFixed(2)})`;
+        ctx.fillText(coordText, closestPoint.pixelX + 10, closestPoint.pixelY - 10);
+    } else {
+        // Optionally, redraw the graph without the point if the mouse is not close
+        drawGraph();
+    }
+}
+
+
+
 // Event listeners for zoom and pan
 
 // Zooming
@@ -226,3 +308,5 @@ canvas.addEventListener('mouseleave', function () {
     isPanning = false;
     canvas.style.cursor = 'grab';
 });
+
+canvas.addEventListener('mousemove', showCoordinates);
